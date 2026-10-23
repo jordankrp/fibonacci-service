@@ -20,16 +20,16 @@ $ curl localhost:8070/v1/fibonacci/5
 | Unknown path                | 404    | `{"message", "code": "EndpointNotFound", "detail": null}` |
 | Method other than `GET`     | 405    | `{"message", "code": "MethodNotAllowed", "detail": null}` |
 
-All errors share the shape `{"message": str, "code": str, "detail": any}`.
+All errors share the format `{"message": str, "code": str, "detail": any}`.
 
 `n` is capped at 1000 (defined by `MAX_N` in `service/fibonacci.py`) to keep response size and CPU time per
 request bounded.
 
-Numbers are returned as exact JSON integers. Note that values from `n=79` onwards exceed 2^53, so JavaScript's `JSON.parse` will round them as it stores every number as a 64-bit float by default. Clients that need them exactly should use a BigInt JSON parser.
+Numbers are returned as exact JSON integers. Note that values from `n=79` onwards exceed 2^53, so JavaScript's `JSON.parse` will round them as it stores every number as a 64-bit float by default. (Front-end) clients that need them exactly should use a BigInt JSON parser.
 
 ## Development
 
-Requires [uv](https://docs.astral.sh/uv/). uv installs the right Python (3.14) for you.
+Requires [uv](https://docs.astral.sh/uv/), which installs the right Python version (3.14).
 
 ```sh
 uv sync                        # create .venv with all dependencies
@@ -42,13 +42,12 @@ uv run mypy service tests      # type-check
 uv run uvicorn service.http_server_main:app --port 8070 --reload   # dev server
 ```
 
-Testing in `tests/`:
+Testing:
 
-- `test_fibonacci.py`: unit tests for the Fibonacci logic in `service/fibonacci.py`
-- `test_api.py`: integration tests for the full HTTP app in `service/http_server_main.py` through
-  FastAPI's `TestClient`
+- `tests/test_fibonacci.py`: unit tests for the Fibonacci logic in `service/fibonacci.py`
+- `tests/test_api.py`: integration tests for the full HTTP app in `service/http_server_main.py` through FastAPI's `TestClient`
 
-## Build and run (production)
+## Build and run in production
 
 The service ships as a Docker image. It runs as a non-root user and listens on port 8070.
 
