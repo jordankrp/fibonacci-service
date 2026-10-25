@@ -65,12 +65,30 @@ curl localhost:8070/v1/fibonacci/10
 
 For an orchestrator or load balancer point the health checks at `GET /health` on port 8070.
 
+### Published images
+
+CI pushes every commit on `main` that passes all checks to Docker Hub as
+[`jordankrp93/fibonacci-service`](https://hub.docker.com/r/jordankrp93/fibonacci-service), with
+two tags:
+
+- `<full git commit SHA>`: immutable. Deploy this tag, so production runs exactly the image CI
+  tested and a rollback is just deploying the previous SHA.
+- `latest`: changes with every push to `main`. Useful for trying the service out but not for deployments.
+
+```sh
+docker run -d -p 8070:8070 jordankrp93/fibonacci-service:<commit-sha>
+```
+
+Pushing requires a Docker Hub access token with read & write scope, stored as the GitHub Actions
+repository secret `DOCKERHUB_TOKEN`.
+
 ## CI
 
 `.github/workflows/ci.yml` runs on every push to `main` and on every pull request:
 
 1. Format, lint, type-check, and run the tests.
 2. Build the Docker image and smoke-test the running container.
+3. On `main` only: push that image to Docker Hub (see [Published images](#published-images)).
 
 ## Maintenance
 

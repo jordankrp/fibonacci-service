@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -22,6 +25,8 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     needs: check
+    env:
+      IMAGE: jordankrp93/fibonacci-service
     steps:
       - uses: actions/checkout@v5
       - run: docker build -t fibonacci-service .
@@ -31,3 +36,13 @@ jobs:
           for i in $(seq 1 20); do curl -fs localhost:8070/health && break; sleep 1; done
           test "$(curl -fs localhost:8070/v1/fibonacci/5)" = "[0,1,1,2,3]"
           test "$(curl -s -o /dev/null -w '%{http_code}' localhost:8070/v1/fibonacci/-1)" = "422"
+      - name: Push image to Docker Hub
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          echo "$DOCKERHUB_TOKEN" | docker login -u jordankrp93 --password-stdin
+          docker tag fibonacci-service "$IMAGE:$GITHUB_SHA"
+          docker tag fibonacci-service "$IMAGE:latest"
+          docker push "$IMAGE:$GITHUB_SHA"
+          docker push "$IMAGE:latest"
