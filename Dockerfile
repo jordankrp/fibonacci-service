@@ -13,7 +13,7 @@ ENV UV_LINK_MODE=copy
 
 COPY ["./pyproject.toml", "./uv.lock", "/api/"]
 
-RUN uv sync --python-preference only-system --frozen --no-dev --compile-bytecode
+RUN uv sync --python-preference only-system --locked --no-dev --compile-bytecode
 
 FROM base
 

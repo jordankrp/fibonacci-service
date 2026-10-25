@@ -1,0 +1,46 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    "docker:pinDigests",
+    "helpers:pinGitHubActionDigests"
+  ],
+  "lockFileMaintenance": {
+    "enabled": true
+  },
+  "packageRules": [
+    {
+      "description": "Keep the version ranges in pyproject.toml; bump uv.lock within them.",
+      "matchManagers": [
+        "pep621"
+      ],
+      "rangeStrategy": "update-lockfile"
+    },
+    {
+      "description": "Move the Python version in the Dockerfile and .python-version together.",
+      "matchDepNames": [
+        "python"
+      ],
+      "groupName": "Python"
+    },
+    {
+      "description": "A new Python minor (e.g. 3.15) also needs requires-python changed by hand, so wait for approval on the Dependency Dashboard instead of opening a PR straight away.",
+      "matchDepNames": [
+        "python"
+      ],
+      "matchUpdateTypes": [
+        "major",
+        "minor"
+      ],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "Keep the uv used in CI and in the Docker build on the same version.",
+      "matchDepNames": [
+        "astral-sh/uv",
+        "ghcr.io/astral-sh/uv"
+      ],
+      "groupName": "uv"
+    }
+  ]
+}

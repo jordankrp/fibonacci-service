@@ -36,8 +36,8 @@ Liveness probe, returns `200 {"status": "ok"}`. It is not versioned since it is 
 Requires [uv](https://docs.astral.sh/uv/), which installs the right Python version (3.14).
 
 ```sh
-uv sync                        # create .venv with all dependencies
-uv run pre-commit install      # optional: run format/lint/type checks on commit
+uv sync                        # create/ update .venv with all dependencies
+uv run pre-commit install      # run once to format/ lint/ type-check on every commit
 uv run pytest                  # unit tests
 uv run ruff format .           # format
 uv run ruff check .            # lint
@@ -92,6 +92,16 @@ repository secret `DOCKERHUB_TOKEN`.
 
 ## Maintenance
 
-- Dependencies are locked in `uv.lock`. To upgrade, run `uv lock --upgrade`, then run the tests.
-- To increase the Python version, change `.python-version`, `requires-python` inside `pyproject.toml`, and the `FROM` line in the `Dockerfile` together. `uv sync` to create a new `uv.lock` file.
+- Dependency updates are automated with [Renovate](https://docs.renovatebot.com/) (`renovate.json`).
+  It opens PRs for Python packages (`uv.lock`), the Docker base image and uv version, and the CI checks each one.
+  Merge them when CI passes.
+  Its Dependency Dashboard issue on GitHub lists pending updates.
+- A new Python minor version (e.g. 3.15) is not opened as a PR automatically. Approve it on the
+  Dependency Dashboard and Renovate opens a PR updating the Docker base image and `.python-version`.
+  On that PR's branch, update `requires-python` in `pyproject.toml` by hand and run `uv lock`
+  (CI requires the lockfile to match), then push.
+- Renovate never changes the Debian release in the `FROM` tag (`-slim-bookworm`). When a new Debian
+  stable release comes out, switch the tag by hand before the old release loses
+  security support.
+- To refresh `uv.lock` manually, run `uv lock --upgrade`, then run the tests.
 - Breaking API changes go under a new `/v2` path. Keep `/v1` until clients have migrated.
