@@ -5,7 +5,7 @@ from fastapi import Request, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from starlette.exceptions import HTTPException
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 
 def _error(
@@ -31,7 +31,7 @@ async def handle_validation_error(req: Request, exc: RequestValidationError) -> 
     )
 
 
-async def handle_http_error(req: Request, exc: HTTPException) -> JSONResponse:
+async def handle_http_error(req: Request, exc: StarletteHTTPException) -> JSONResponse:
     endpoint = f"'{req.method} {req.url.path}'"
     if exc.status_code == status.HTTP_404_NOT_FOUND:
         message, code = f"Endpoint {endpoint} does not exist", "EndpointNotFound"
@@ -53,6 +53,6 @@ async def handle_generic(req: Request, exc: Exception) -> JSONResponse:
 
 handlers: dict[int | type[Exception], Any] = {
     RequestValidationError: handle_validation_error,
-    HTTPException: handle_http_error,
+    StarletteHTTPException: handle_http_error,
     Exception: handle_generic,
 }
