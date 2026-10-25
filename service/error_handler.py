@@ -7,6 +7,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from service.observability import CORRELATION_ID_HEADER, correlation_id
+
 
 def _error(
     status_code: int,
@@ -44,10 +46,15 @@ async def handle_http_error(req: Request, exc: StarletteHTTPException) -> JSONRe
 
 
 async def handle_generic(req: Request, exc: Exception) -> JSONResponse:
+    # No logging here: Starlette re-raises after this response is sent, and uvicorn logs the
+    # traceback (as JSON, with the correlation ID).
+    # This handler runs outside the request middleware, so it sets the correlation header itself.
+    request_id = correlation_id.get()
     return _error(
         status.HTTP_500_INTERNAL_SERVER_ERROR,
         message="Internal server error",
         code="InternalServerError",
+        headers={CORRELATION_ID_HEADER: request_id} if request_id else None,
     )
 
 

@@ -31,6 +31,38 @@ Numbers are returned as exact JSON integers. Note that values from `n=79` onward
 
 Liveness probe, returns `200 {"status": "ok"}`. It is not versioned since it is meant for infrastructure rather than API clients.
 
+### `GET /metrics`
+
+Prometheus metrics (see [Observability](#observability)). Like `/health` it is for infrastructure:
+don't expose it publicly, block it at the ingress or load balancer.
+
+## Observability
+
+### Logs
+
+Everything is logged as one JSON object per line on stdout. Each request produces one access log line:
+
+```json
+{"timestamp": "2026-10-25T13:52:21.170825+00:00", "level": "INFO", "logger": "service.observability", "message": "request", "correlation_id": "trace-me-1", "method": "GET", "path": "/v1/fibonacci/5", "route": "/v1/fibonacci/{n}", "status": 200, "duration_ms": 0.31}
+```
+
+Unhandled exceptions are logged by uvicorn with the full traceback with the same `correlation_id`.
+
+### Correlation IDs
+
+Every response has an `X-Correlation-ID` header, including error responses. If the request sends
+one it is reused, otherwise a new ID is generated. Every log line written while handling the
+request carries it, so searching for it returns everything about that request.
+
+### Metrics
+
+`GET /metrics` exposes `http_request_duration_seconds`, a histogram labelled by `method`, `route`
+and `status`. It gives request rate, error rate and latency percentiles. The standard `process_*`
+and `python_*` metrics (CPU, memory, garbage collection) are included automatically.
+
+`route` is the route template (e.g. `/v1/fibonacci/{n}`); requests to unknown paths are grouped as
+`unmatched`. Labelling by raw path would create a separate time series for every URL.
+
 ## Development
 
 Requires [uv](https://docs.astral.sh/uv/), which installs the right Python version (3.14).
@@ -50,6 +82,7 @@ Testing:
 
 - `tests/test_fibonacci.py`: unit tests for the Fibonacci logic in `service/fibonacci.py`
 - `tests/test_api.py`: integration tests for the full HTTP app in `service/http_server_main.py` through FastAPI's `TestClient`
+- `tests/test_observability.py`: correlation IDs, access log and metrics from `service/observability.py`
 
 ## Build and run in production
 
@@ -63,7 +96,7 @@ curl localhost:8070/health
 curl localhost:8070/v1/fibonacci/10
 ```
 
-For an orchestrator or load balancer point the health checks at `GET /health` on port 8070.
+For an orchestrator or load balancer use the health checks at `GET /health` on port 8070.
 
 ### Published images
 
@@ -73,7 +106,7 @@ two tags:
 
 - `<full git commit SHA>`: immutable. Deploy this tag, so production runs exactly the image CI
   tested and a rollback is just deploying the previous SHA.
-- `latest`: changes with every push to `main`. Useful for trying the service out but not for deployments.
+- `latest`: changes with every push to `main`.
 
 ```sh
 docker run -d -p 8070:8070 jordankrp93/fibonacci-service:<commit-sha>
@@ -88,14 +121,15 @@ repository secret `DOCKERHUB_TOKEN`.
 
 1. Format, lint, type-check, and run the tests.
 2. Build the Docker image and smoke-test the running container.
-3. On `main` only: push that image to Docker Hub (see [Published images](#published-images)).
+3. On `main` only: push that image to Docker Hub.
 
 ## Maintenance
 
 - Dependency updates are automated with [Renovate](https://docs.renovatebot.com/) (`renovate.json`).
   It opens PRs for Python packages (`uv.lock`), the Docker base image and uv version, and the CI checks each one.
   Merge them when CI passes.
-  Its Dependency Dashboard issue on GitHub lists pending updates.
+  Its Dependency Dashboard issue on GitHub lists pending updates. Renovate's run logs are in the
+  [Mend developer portal](https://developer.mend.io/github/jordankrp/fibonacci-service).
 - A new Python minor version (e.g. 3.15) is not opened as a PR automatically. Approve it on the
   Dependency Dashboard and Renovate opens a PR updating the Docker base image and `.python-version`.
   On that PR's branch, update `requires-python` in `pyproject.toml` by hand and run `uv lock`

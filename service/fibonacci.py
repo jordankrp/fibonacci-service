@@ -1,6 +1,6 @@
-# Upper bound on how many numbers a single request may ask for. For n=1000 we have around 105,000 digits,
-# which keeps the response around 100 KB (assuming 1 digit = 1 byte in plain ASCII). Without a cap,
-# a single request for a large n would tie up a worker and produce a response of unbounded size.
+# Upper bound on how many numbers a single request may ask for. For n=1000 we have around 105,000 digits
+# in total, which keeps the response around 100 KB (assuming 1 digit = 1 byte in plain ASCII). Without a
+# cap, a single request for a large n would occupy a worker and produce a response of unbounded size.
 MAX_N = 1000
 
 
@@ -11,9 +11,9 @@ def fibonacci_sequence(n: int) -> list[int]:
     if n < 0:
         raise ValueError(f"n must not be negative, got {n}")
 
-    result: list[int] = []
+    sequence: list[int] = []
     a, b = 0, 1
     for _ in range(n):
-        result.append(a)
+        sequence.append(a)
         a, b = b, a + b
-    return result
+    return sequence
