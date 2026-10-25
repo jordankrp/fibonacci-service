@@ -27,6 +27,10 @@ request bounded.
 
 Numbers are returned as exact JSON integers. Note that values from `n=79` onwards exceed 2^53, so JavaScript's `JSON.parse` will round them as it stores every number as a 64-bit float by default. (Front-end) clients that need them exactly should use a BigInt JSON parser.
 
+### `GET /health`
+
+Liveness probe, returns `200 {"status": "ok"}`. It is not versioned since it is meant for infrastructure rather than API clients.
+
 ## Development
 
 Requires [uv](https://docs.astral.sh/uv/), which installs the right Python version (3.14).
@@ -55,9 +59,11 @@ The service ships as a Docker image. It runs as a non-root user and listens on p
 docker build -t fibonacci-service .
 docker run -d -p 8070:8070 --name fibonacci-service fibonacci-service
 
+curl localhost:8070/health
 curl localhost:8070/v1/fibonacci/10
 ```
 
+For an orchestrator or load balancer point the health checks at `GET /health` on port 8070.
 
 ## CI
 

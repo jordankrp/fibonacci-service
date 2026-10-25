@@ -28,6 +28,6 @@ jobs:
       - name: Smoke test the built image
         run: |
           docker run -d --name fib -p 8070:8070 fibonacci-service
-          for i in $(seq 1 20); do curl -fs localhost:8070/v1/fibonacci/0 && break; sleep 1; done
+          for i in $(seq 1 20); do curl -fs localhost:8070/health && break; sleep 1; done
           test "$(curl -fs localhost:8070/v1/fibonacci/5)" = "[0,1,1,2,3]"
           test "$(curl -s -o /dev/null -w '%{http_code}' localhost:8070/v1/fibonacci/-1)" = "422"

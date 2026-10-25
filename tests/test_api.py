@@ -117,11 +117,18 @@ def test_wrong_method(client: TestClient) -> None:
     assert response.headers["allow"] == "GET"
 
 
-def test_unhandled_error(monkeypatch: pytest.MonkeyPatch) -> None:
-    def boom(n: int) -> list[int]:
-        raise RuntimeError("boom")
+def test_health(client: TestClient) -> None:
+    response = client.get("/health")
 
-    monkeypatch.setattr(http_server_main, "fibonacci_sequence", boom)
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+
+
+def test_unhandled_generic_exception(monkeypatch: pytest.MonkeyPatch) -> None:
+    def runtime_error(n: int) -> list[int]:
+        raise RuntimeError("This is a runtime error")
+
+    monkeypatch.setattr(http_server_main, "fibonacci_sequence", runtime_error)
 
     with TestClient(http_server_main.app, raise_server_exceptions=False) as client:
         response = client.get("/v1/fibonacci/1")

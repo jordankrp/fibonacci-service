@@ -11,3 +11,8 @@ app = FastAPI(exception_handlers=error_handlers)
 @app.get("/v1/fibonacci/{n}")
 def get_fibonacci_sequence(n: Annotated[int, Path(ge=0, le=MAX_N)]) -> list[int]:
     return fibonacci_sequence(n)
+
+
+@app.get("/health", include_in_schema=False)
+def health() -> dict[str, str]:
+    return {"status": "ok"}
