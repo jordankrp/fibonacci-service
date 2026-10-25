@@ -126,16 +126,11 @@ repository secret `DOCKERHUB_TOKEN`.
 ## Maintenance
 
 - Dependency updates are automated with [Renovate](https://docs.renovatebot.com/) (`renovate.json`).
-  It opens PRs for Python packages (`uv.lock`), the Docker base image and uv version, and the CI checks each one.
-  Merge them when CI passes.
-  Its Dependency Dashboard issue on GitHub lists pending updates. Renovate's run logs are in the
-  [Mend developer portal](https://developer.mend.io/github/jordankrp/fibonacci-service).
-- A new Python minor version (e.g. 3.15) is not opened as a PR automatically. Approve it on the
-  Dependency Dashboard and Renovate opens a PR updating the Docker base image and `.python-version`.
-  On that PR's branch, update `requires-python` in `pyproject.toml` by hand and run `uv lock`
-  (CI requires the lockfile to match), then push.
-- Renovate never changes the Debian release in the `FROM` tag (`-slim-bookworm`). When a new Debian
-  stable release comes out, switch the tag by hand before the old release loses
-  security support.
-- To refresh `uv.lock` manually, run `uv lock --upgrade`, then run the tests.
+  It opens PRs for Python packages (`uv.lock`), the Docker base image, uv and GitHub Actions. Pending updates are listed in the Dependency Dashboard issue on GitHub,
+  and run logs are in the [Mend developer portal](https://developer.mend.io/github/jordankrp/fibonacci-service).
+- Two upgrades need a manual step:
+  - **New Python minor version** (e.g. 3.15): approve it on the Dependency Dashboard. On the PR's
+    branch, update `requires-python` in `pyproject.toml`, run `uv lock`, and push.
+  - **New Debian release**: Renovate never changes the `-slim-bookworm` suffix in the Dockerfile's
+    `FROM` tag. Switch it by hand before the old release loses security support.
 - Breaking API changes go under a new `/v2` path. Keep `/v1` until clients have migrated.
